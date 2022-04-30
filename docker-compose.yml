@@ -1,0 +1,44 @@
+version: "3.3"
+services:
+  mongodb:
+    image : mongo:5.0.5
+    container_name: mongodb-nodejs
+    restart: unless-stopped
+    env_file: ./.env
+    stdin_open: true
+    tty: true
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=$MONGODB_USER
+      - MONGO_INITDB_ROOT_PASSWORD=$MONGODB_PASSWORD
+    ports:
+      - $MONGODB_DOCKER_PORT:$MONGODB_LOCAL_PORT
+    volumes:
+      # - ./mongodb/database:/data/db
+      # - ./mongodb/backup:/data/backup
+      # - ./mongodb/mongo-entrypoint/:/docker-entrypoint-initdb.d/
+      - db:/data/db
+
+  app-backend:
+    container_name: api-nodejs
+    build: .
+    stdin_open: true
+    tty: true
+    restart: unless-stopped
+    env_file: ./.env
+    working_dir: /var/www/html/backend/
+    ports:
+      - $NODE_LOCAL_PORT:$NODE_DOCKER_PORT
+    volumes:
+      - .:/var/www/html/backend/
+    environment:
+      - DB_HOST=mongodb
+      - DB_USER=$MONGODB_USER
+      - DB_PASSWORD=$MONGODB_PASSWORD
+      - DB_NAME=$MONGODB_DATABASE
+      - DB_PORT=$MONGODB_LOCAL_PORT
+    depends_on:
+      - mongodb
+    links:
+      - mongodb
+volumes:
+  db:
